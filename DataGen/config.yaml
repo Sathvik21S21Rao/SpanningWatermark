@@ -1,0 +1,23 @@
+data:
+  csv_path: "span_events.csv"
+
+  generator:
+    num_events: 10000
+    start_time: "2026-03-20T00:00:00"
+    min_span_ms: 10000
+    max_span_ms: 20000
+    delayed: 5000
+    seed: 42
+    events_per_sec: 10000
+
+kafka:
+  topic: "span-events"
+
+  config:
+    bootstrap.servers: "localhost:9092"
+    client.id: "span-event-producer"
+    linger.ms: 5
+    compression.type: "snappy"
+      #acks: "all"
+      #retries: 3
+
