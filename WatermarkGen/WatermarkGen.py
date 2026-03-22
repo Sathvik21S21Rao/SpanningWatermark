@@ -29,5 +29,5 @@ class Adwin(WatermarkGenerator):
         pass
 
 # Have to set env.get_config().set_auto_watermark_interval(0) for adwin
-# output.emit_watermark(Watermark(candidate_wm)), output is an attribute in the super class WatermarkGenerator
+# output.emit_watermark(Watermark(candidate_wm)), output is passed as an argument
 # for Adwin logic we can use a separate class and call the function within on_event here
