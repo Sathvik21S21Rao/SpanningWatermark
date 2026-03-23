@@ -6,9 +6,9 @@ data:
     start_time: "2026-03-20T00:00:00"
     min_span_ms: 10000
     max_span_ms: 20000
-    delayed: 5000
+    delayed: 0
     seed: 42
-    events_per_sec: 10000
+    events_per_sec: 1000
 
 kafka:
   topic: "span-events"
