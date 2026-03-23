@@ -16,3 +16,4 @@ topics:
 
 watermark:
   strategy: "periodic"  # or "adwin"
+  watermark_auto_interval: 200

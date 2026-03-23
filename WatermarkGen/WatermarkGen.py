@@ -11,9 +11,20 @@ class PeriodicWatermark(WatermarkGenerator):
         self.last_emitted_wm = float('-inf')
 
     def on_event(self, event, event_timestamp: int, output):
-        pass
+        if(event_timestamp > self.max_ts):
+            self.max_ts = event_timestamp
+        # pass
+
     def on_periodic_emit(self, output): 
-        pass
+
+        if(self.max_ts == float('-inf')):
+            return
+
+        candidate_wm = self.max_ts - self.max_out_of_orderness
+        if(candidate_wm > self.last_emitted_wm):
+            output.emit_watermark(Watermark(candidate_wm))
+            self.last_emitted_wm = candidate_wm
+        # pass
 
 class Adwin(WatermarkGenerator):
     
