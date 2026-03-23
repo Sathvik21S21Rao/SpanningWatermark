@@ -49,6 +49,8 @@ class SpanPipeline:
 
         env.add_jars(*self.flink_cfg["jars"])
 
+        env.get_config().set_auto_watermark_interval(self.watermark_cfg["watermark_auto_interval"])
+
         watermark_strategy = PeriodicWatermark if self.watermark_cfg["strategy"] == "periodic" else Adwin
 
         source = KafkaSource.builder() \
