@@ -50,7 +50,7 @@ def stream_events(generator, producer, topic, data_conf):
         payload = {
             "event_id": e["event_id"],
             "signal_type": e["signal_type"],
-            "timestamp": e["timestamp"].isoformat(),
+            "timestamp": e["timestamp"].isoformat(timespec="milliseconds")+"Z",
             "payload": e["payload"],
         }
 
