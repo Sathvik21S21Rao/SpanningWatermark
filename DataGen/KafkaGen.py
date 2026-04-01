@@ -23,9 +23,12 @@ def delivery_report(err, msg):
 def create_generator(config):
     gen_cfg = config["generator"]
 
+    start_time_str = gen_cfg.get("start_time")
+    start_time = datetime.fromisoformat(start_time_str) if start_time_str else datetime.now()
+
     return SpanDataGen(
         num_events=gen_cfg["num_events"],
-        start_time=datetime.fromisoformat(gen_cfg["start_time"]),
+        start_time=start_time,  # ← now uses current time if not specified
         min_span_ms=gen_cfg["min_span_ms"],
         max_span_ms=gen_cfg["max_span_ms"],
         delayed=gen_cfg.get("delayed", 0),

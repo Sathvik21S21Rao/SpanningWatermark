@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 
@@ -19,7 +20,7 @@ public class PeriodicWatermarkGenerator implements WatermarkGenerator<String>, S
     private long lastEmittedWm = Long.MIN_VALUE;
     private transient ObjectMapper objectMapper;
     private Map<Long, Long> activeSpans = new HashMap<>();
-    private Map<Long,Long> minStartTimestamps = new HashMap<>(); // Multiset to track min start timestamps of active spans
+    private TreeMap<Long,Long> minStartTimestamps = new TreeMap<>(); // Multiset to track min start timestamps of active spans
     private Long maxEndTimestamp = Long.MIN_VALUE; // No need for a multiset for max end timestamps since it is monotonically increasing
 
     public PeriodicWatermarkGenerator(long maxOutOfOrdernessMs) {
@@ -51,17 +52,21 @@ public class PeriodicWatermarkGenerator implements WatermarkGenerator<String>, S
                 // End event
                 maxEndTimestamp = Math.max(maxEndTimestamp, timestamp);
                 
-                minStartTimestamps.put(activeSpans.get(event_id), minStartTimestamps.get(activeSpans.get(event_id)) - 1);
-                if (minStartTimestamps.get(activeSpans.get(event_id)) == 0) {
-                    minStartTimestamps.remove(activeSpans.get(event_id));
+                Long startTs = activeSpans.get(event_id);
+                if (startTs != null) {
+                    long count = minStartTimestamps.getOrDefault(startTs, 0L) - 1;
+                    if (count <= 0) {
+                        minStartTimestamps.remove(startTs);
+                    } else {
+                        minStartTimestamps.put(startTs, count);
+                    }
+                    activeSpans.remove(event_id);
                 }
-                if (!activeSpans.isEmpty()) {
-                    W_e = Math.min(minStartTimestamps.keySet().iterator().next(),
-                                   maxEndTimestamp);
+                if (!activeSpans.isEmpty() && !minStartTimestamps.isEmpty()) {
+                    W_e = Math.min(minStartTimestamps.firstKey(), maxEndTimestamp);
                 } else {
                     W_e = maxEndTimestamp;
                 }
-                activeSpans.remove(event_id);
             }
         } catch (Exception e) {
             e.printStackTrace();

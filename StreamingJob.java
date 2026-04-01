@@ -1,6 +1,7 @@
 import org.apache.flink.api.common.eventtime.WatermarkGenerator;
 import org.apache.flink.api.common.eventtime.WatermarkOutput;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.kafka.source.KafkaSource;
@@ -8,10 +9,14 @@ import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsIni
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.Properties;
 
 /**
@@ -20,6 +25,25 @@ import java.util.Properties;
  */
 public class StreamingJob {
     private Properties properties;
+
+    private static class JsonTimestampAssigner implements SerializableTimestampAssigner<String> {
+        private static final long serialVersionUID = 1L;
+        private transient ObjectMapper mapper;
+
+        @Override
+        public long extractTimestamp(String event, long recordTimestamp) {
+            try {
+                if (mapper == null) {
+                    mapper = new ObjectMapper();
+                }
+                JsonNode json = mapper.readTree(event);
+                String ts = json.get("timestamp").asText();
+                return Instant.parse(ts).toEpochMilli();
+            } catch (Exception e) {
+                return recordTimestamp;
+            }
+        }
+    }
 
     public StreamingJob(String configPath) throws IOException {
         loadConfig(configPath);
@@ -57,7 +81,7 @@ public class StreamingJob {
         env.setParallelism(parallelism);
 
         // Get watermark strategy and configuration
-        String strategy = properties.getProperty("watermark.strategy", "periodic");
+        String strategy = properties.getProperty("watermark.strategy", "adwin");
         String watermarkAutoIntervalStr = properties.getProperty("watermark.auto.interval", "200");
         int watermarkAutoInterval = Integer.parseInt(watermarkAutoIntervalStr);
         String maxOutOfOrdernessStr = properties.getProperty("watermark.max.out.of.orderness.ms", "1000");
@@ -78,7 +102,7 @@ public class StreamingJob {
         // Create watermark strategy
         WatermarkStrategy<String> wmStrategy = WatermarkStrategy
                 .forGenerator((ctx) -> watermarkGenerator)
-                .withTimestampAssigner((event, recordTimestamp) -> recordTimestamp);
+                .withTimestampAssigner(new JsonTimestampAssigner());
 
         // Build Kafka source
         String bootstrapServers = properties.getProperty("kafka.bootstrap.servers", "localhost:9092");

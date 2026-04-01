@@ -160,6 +160,7 @@ if __name__=='__main__':
         min_span_ms=10000,
         max_span_ms=20000,
         delayed=5000,
-        seed=42
+        seed=42,
+        events_per_sec=10000
     )
     gen.write_csv("span_events.csv")
