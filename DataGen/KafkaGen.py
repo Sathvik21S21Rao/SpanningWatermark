@@ -3,7 +3,7 @@ import time
 import yaml
 from datetime import datetime
 from confluent_kafka import Producer
-
+from datetime import timezone
 from DataGen import SpanDataGen
 
 
@@ -24,7 +24,7 @@ def create_generator(config):
     gen_cfg = config["generator"]
 
     start_time_str = gen_cfg.get("start_time")
-    start_time = datetime.fromisoformat(start_time_str) if start_time_str else datetime.now()
+    start_time = datetime.fromisoformat(start_time_str) if start_time_str else datetime.now(timezone.utc)
 
     return SpanDataGen(
         num_events=gen_cfg["num_events"],
@@ -46,14 +46,14 @@ def stream_events(generator, producer, topic, data_conf):
 
     sent = 0
 
-    print(f"Streaming {len(events)} events at ~{rate} signals/sec")
+    print(f"Streaming {len(events)//2} events at ~{rate} signals/sec")
 
     for i,e in enumerate(events):
         
         payload = {
             "event_id": e["event_id"],
             "signal_type": e["signal_type"],
-            "timestamp": e["timestamp"].isoformat(timespec="milliseconds")+"Z",
+            "timestamp": e["timestamp"].isoformat(timespec="milliseconds").replace("+00:00", "Z"),
             "payload": e["payload"],
         }
 

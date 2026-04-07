@@ -8,7 +8,7 @@ data:
     max_span_ms: 20000
     delayed: 0
     seed: 42
-    events_per_sec: 1000
+    events_per_sec: 100
 
 kafka:
   topic: "span-events"
