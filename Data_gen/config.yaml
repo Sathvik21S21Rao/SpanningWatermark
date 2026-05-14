@@ -1,0 +1,14 @@
+kafka:
+  topic: "spanning-events"
+  config:
+    bootstrap.servers: "localhost:9092"
+    client.id: "python-producer"
+
+data:
+  generator:
+    num_events: 20
+    min_span_ms: 1000
+    max_span_ms: 5000
+    delayed: 3000          # Max network delay in milliseconds
+    events_per_sec: 5      # How fast to push to Kafka
+    seed: 42               # Keeps the random delay trackable
